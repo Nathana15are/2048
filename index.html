@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>2048 Ultra Deluxe</title>
+  <title>2048 Ultra Max Deluxe</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="menu">
-    <h1>2048 Ultra Deluxe</h1>
+    <h1>2048 Ultra Max Deluxe 🎮</h1>
     <button onclick="startGame('classic')">Classique</button>
-    <button onclick="startGame('chrono')">Chrono</button>
-    <button onclick="startGame('hardcore')">Hardcore</button>
-    <button onclick="startGame('puzzle')">Puzzle</button>
+    <button onclick="startGame('chrono')">⏱️ Chrono</button>
+    <button onclick="startGame('hardcore')">🔥 Hardcore</button>
+    <button onclick="startGame('versus')">⚔️ 1v1 (même écran)</button>
     <h2>Choisis ton skin</h2>
     <select id="skin-select">
       <option value="numbers">🔢 Nombres</option>
@@ -33,6 +33,31 @@
     </div>
     <div id="grid"></div>
   </div>
+
+  <!-- ⚔️ Mode 1v1 -->
+  <div id="versus" class="hidden">
+    <div class="top-bar">
+      <button onclick="goToMenu()">🏠 Menu</button>
+      <span>⚔️ Duel 1v1</span>
+    </div>
+    <div id="boards">
+      <div class="player">
+        <h2>🅰 Joueur 1 (ZQSD)</h2>
+        <span id="score1">Score: 0</span>
+        <div id="grid1" class="grid"></div>
+      </div>
+      <div class="player">
+        <h2>🅱 Joueur 2 (Flèches)</h2>
+        <span id="score2">Score: 0</span>
+        <div id="grid2" class="grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🎵 Effets sonores -->
+  <audio id="pop-sound" src="https://assets.mixkit.co/sfx/download/mixkit-game-ball-tap-2073.wav"></audio>
+  <audio id="merge-sound" src="https://assets.mixkit.co/sfx/download/mixkit-video-game-treasure-2066.wav"></audio>
+  <audio id="win-sound" src="https://assets.mixkit.co/sfx/download/mixkit-ethereal-fairy-win-sound-2019.wav"></audio>
 
   <script src="script.js"></script>
 </body>
