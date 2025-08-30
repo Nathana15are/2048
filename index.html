@@ -2,16 +2,38 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>2048 Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2048 Ultra Deluxe</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>2048</h1>
-  <div class="game-container">
-    <div id="grid-container"></div>
+  <div id="menu">
+    <h1>2048 Ultra Deluxe</h1>
+    <button onclick="startGame('classic')">Classique</button>
+    <button onclick="startGame('chrono')">Chrono</button>
+    <button onclick="startGame('hardcore')">Hardcore</button>
+    <button onclick="startGame('puzzle')">Puzzle</button>
+    <h2>Choisis ton skin</h2>
+    <select id="skin-select">
+      <option value="numbers">🔢 Nombres</option>
+      <option value="animals">🐼 Animaux</option>
+      <option value="food">🍕 Food</option>
+      <option value="gaming">🎮 Gaming</option>
+      <option value="random">🎲 Random</option>
+    </select>
   </div>
-  <p>Utilise les flèches du clavier (⬆️⬇️⬅️➡️) pour jouer.</p>
-  <p>Score : <span id="score">0</span></p>
+
+  <div id="game" class="hidden">
+    <div class="top-bar">
+      <button onclick="goToMenu()">🏠 Menu</button>
+      <button onclick="undoMove()">↩️ Undo</button>
+      <span id="chrono">⏱️ 0s</span>
+      <span id="score">Score: 0</span>
+      <span id="best">Best: 0</span>
+    </div>
+    <div id="grid"></div>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>
