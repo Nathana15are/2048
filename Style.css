@@ -1,51 +1,55 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #0d0d0d;
+  background: url("https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=1920&q=80") no-repeat center center fixed;
+  background-size: cover;
   color: #fff;
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
+  text-align: center;
 }
 
-.hidden {
-  display: none;
-}
+.hidden { display: none; }
 
 #menu {
-  text-align: center;
+  background: rgba(0,0,0,0.6);
+  padding: 20px;
+  border-radius: 15px;
 }
 
-#menu h1 {
-  font-size: 2.5em;
-  margin-bottom: 20px;
+#game, #versus {
+  background: rgba(0,0,0,0.7);
+  padding: 20px;
+  border-radius: 15px;
 }
 
-#menu button, select {
-  margin: 5px;
-  padding: 10px 20px;
-  font-size: 1em;
-}
+.top-bar { margin-bottom: 10px; }
 
-#game {
-  text-align: center;
-}
-
-.top-bar {
-  margin-bottom: 10px;
-}
-
-#grid {
+#grid, .grid {
   display: grid;
-  grid-template-columns: repeat(4, 80px);
+  grid-template-columns: repeat(4, minmax(60px, 80px));
   grid-gap: 5px;
+  justify-content: center;
+  margin: auto;
+}
+
+#boards {
+  display: flex;
+  gap: 40px;
   justify-content: center;
 }
 
+.player {
+  background: rgba(255,255,255,0.05);
+  padding: 10px;
+  border-radius: 10px;
+}
+
 .tile {
-  width: 80px;
-  height: 80px;
+  width: 100%;
+  aspect-ratio: 1;
   background: #333;
   border-radius: 10px;
   display: flex;
@@ -53,13 +57,5 @@ body {
   align-items: center;
   font-size: 2em;
   transition: all 0.2s;
-}
-
-.tile.new {
-  animation: pop 0.2s;
-}
-
-@keyframes pop {
-  from { transform: scale(0.5); }
-  to { transform: scale(1); }
+  box-shadow: 0 0 10px #000;
 }
