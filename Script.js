@@ -1,104 +1,172 @@
-const gridContainer = document.getElementById("grid-container");
-const scoreDisplay = document.getElementById("score");
+let grid = [];
 let score = 0;
+let bestScore = localStorage.getItem("best") || 0;
+let gameMode = "classic";
+let chrono = 0;
+let chronoInterval;
+let undoStack = [];
+let skin = "numbers";
 
-// Initialiser une grille 4x4 remplie de 0
-let grid = Array(4).fill().map(() => Array(4).fill(0));
+// 🎭 Skins
+const skins = {
+  numbers: num => num,
+  animals: {2:"🐣",4:"🐥",8:"🐓",16:"🐔",32:"🦆",64:"🦉",128:"🦅",256:"🦖",512:"🐉",1024:"🐲",2048:"🐼"},
+  food: {2:"🍏",4:"🍎",8:"🍐",16:"🍊",32:"🍋",64:"🍌",128:"🍉",256:"🍇",512:"🍓",1024:"🍒",2048:"🍍"},
+  gaming: {2:"🕹️",4:"🎮",8:"💿",16:"👾",32:"⚡",64:"💎",128:"🔥",256:"🏆",512:"🎲",1024:"🔮",2048:"👑"}
+};
 
-function initGame() {
-  addRandomTile();
-  addRandomTile();
-  drawGrid();
+// 🎮 Lancer le jeu
+function startGame(mode){
+  gameMode = mode;
+  document.getElementById("menu").classList.add("hidden");
+  document.getElementById("game").classList.remove("hidden");
+  skin = document.getElementById("skin-select").value;
+  score = 0;
+  chrono = 0;
+  updateUI();
+  initGrid();
+  if(mode === "chrono"){
+    clearInterval(chronoInterval);
+    chronoInterval = setInterval(()=> {
+      chrono++;
+      document.getElementById("chrono").innerText = `⏱️ ${chrono}s`;
+    },1000);
+  }
 }
 
-function addRandomTile() {
-  let emptyCells = [];
-  for (let r = 0; r < 4; r++) {
-    for (let c = 0; c < 4; c++) {
-      if (grid[r][c] === 0) emptyCells.push({ r, c });
+// Retour menu
+function goToMenu(){
+  clearInterval(chronoInterval);
+  document.getElementById("game").classList.add("hidden");
+  document.getElementById("menu").classList.remove("hidden");
+}
+
+// Initialiser la grille
+function initGrid(){
+  grid = Array(4).fill(null).map(()=> Array(4).fill(0));
+  addTile();
+  addTile();
+  renderGrid();
+}
+
+// Ajouter une tuile
+function addTile(){
+  let empty = [];
+  for(let r=0;r<4;r++){
+    for(let c=0;c<4;c++){
+      if(grid[r][c]===0) empty.push({r,c});
     }
   }
-  if (emptyCells.length > 0) {
-    let { r, c } = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-    grid[r][c] = Math.random() > 0.1 ? 2 : 4;
-  }
+  if(empty.length === 0) return;
+  let {r,c} = empty[Math.floor(Math.random()*empty.length)];
+  grid[r][c] = Math.random() < 0.9 ? 2 : 4;
 }
 
-function drawGrid() {
-  gridContainer.innerHTML = "";
-  for (let r = 0; r < 4; r++) {
-    for (let c = 0; c < 4; c++) {
-      const cell = document.createElement("div");
-      cell.classList.add("cell");
-      if (grid[r][c] !== 0) {
-        cell.textContent = grid[r][c];
-        cell.setAttribute("data-value", grid[r][c]);
+// Afficher la grille
+function renderGrid(){
+  const container = document.getElementById("grid");
+  container.innerHTML = "";
+  for(let r=0;r<4;r++){
+    for(let c=0;c<4;c++){
+      let val = grid[r][c];
+      const div = document.createElement("div");
+      div.className = "tile";
+      if(val !== 0){
+        div.innerText = getSkin(val);
       }
-      gridContainer.appendChild(cell);
+      container.appendChild(div);
     }
   }
-  scoreDisplay.textContent = score;
+  updateUI();
 }
 
-function slide(row) {
-  row = row.filter(val => val); 
-  for (let i = 0; i < row.length - 1; i++) {
-    if (row[i] === row[i + 1]) {
-      row[i] *= 2;
-      score += row[i];
-      row[i + 1] = 0;
-    }
+function getSkin(val){
+  if(skin === "numbers") return val;
+  let set = skins[skin];
+  return set[val] || val;
+}
+
+// UI update
+function updateUI(){
+  document.getElementById("score").innerText = `Score: ${score}`;
+  document.getElementById("best").innerText = `Best: ${bestScore}`;
+}
+
+// Undo
+function undoMove(){
+  if(undoStack.length){
+    let state = undoStack.pop();
+    grid = JSON.parse(state.grid);
+    score = state.score;
+    renderGrid();
   }
-  row = row.filter(val => val);
-  while (row.length < 4) row.push(0);
-  return row;
 }
 
-function rotateGrid(grid) {
-  let newGrid = Array(4).fill().map(() => Array(4).fill(0));
-  for (let r = 0; r < 4; r++) {
-    for (let c = 0; c < 4; c++) {
-      newGrid[r][c] = grid[c][3 - r];
-    }
-  }
-  return newGrid;
-}
-
-function moveLeft() {
-  let newGrid = [];
-  for (let r = 0; r < 4; r++) {
-    newGrid.push(slide(grid[r]));
-  }
-  grid = newGrid;
-  addRandomTile();
-  drawGrid();
-}
-
-function moveRight() {
-  grid = grid.map(row => row.reverse());
-  moveLeft();
-  grid = grid.map(row => row.reverse());
-}
-
-function moveUp() {
-  grid = rotateGrid(grid);
-  moveRight();
-  grid = rotateGrid(rotateGrid(rotateGrid(grid)));
-}
-
-function moveDown() {
-  grid = rotateGrid(grid);
-  moveLeft();
-  grid = rotateGrid(rotateGrid(rotateGrid(grid)));
-}
-
-document.addEventListener("keydown", (e) => {
-  switch (e.key) {
-    case "ArrowLeft": moveLeft(); break;
-    case "ArrowRight": moveRight(); break;
-    case "ArrowUp": moveUp(); break;
-    case "ArrowDown": moveDown(); break;
+// Gestion clavier
+document.addEventListener("keydown", e => {
+  let moved = false;
+  if(e.key === "ArrowUp") moved = move("up");
+  if(e.key === "ArrowDown") moved = move("down");
+  if(e.key === "ArrowLeft") moved = move("left");
+  if(e.key === "ArrowRight") moved = move("right");
+  if(moved) {
+    addTile();
+    renderGrid();
   }
 });
 
-initGame();
+// 📱 Gestion tactile mobile
+let startX, startY;
+document.addEventListener("touchstart", e => {
+  startX = e.touches[0].clientX;
+  startY = e.touches[0].clientY;
+});
+document.addEventListener("touchend", e => {
+  let dx = e.changedTouches[0].clientX - startX;
+  let dy = e.changedTouches[0].clientY - startY;
+  if(Math.abs(dx) > Math.abs(dy)){
+    if(dx > 30) move("right");
+    if(dx < -30) move("left");
+  } else {
+    if(dy > 30) move("down");
+    if(dy < -30) move("up");
+  }
+  renderGrid();
+});
+
+// Déplacements
+function move(dir){
+  let moved = false;
+  undoStack.push({grid: JSON.stringify(grid), score});
+  let newGrid = JSON.parse(JSON.stringify(grid));
+  for(let r=0;r<4;r++){
+    let row = [];
+    for(let c=0;c<4;c++){
+      let val = dir==="left"||dir==="right"?grid[r][c]:grid[c][r];
+      if(val !== 0) row.push(val);
+    }
+    if(dir==="right"||dir==="down") row.reverse();
+    for(let i=0;i<row.length-1;i++){
+      if(row[i]===row[i+1]){
+        row[i]*=2;
+        score+=row[i];
+        row.splice(i+1,1);
+      }
+    }
+    while(row.length<4) row.push(0);
+    if(dir==="right"||dir==="down") row.reverse();
+    for(let c=0;c<4;c++){
+      if(dir==="left"||dir==="right") newGrid[r][c] = row[c];
+      else newGrid[c][r] = row[c];
+    }
+  }
+  if(JSON.stringify(grid)!==JSON.stringify(newGrid)){
+    grid=newGrid;
+    moved=true;
+    if(score>bestScore){
+      bestScore=score;
+      localStorage.setItem("best",bestScore);
+    }
+  }
+  return moved;
+}
