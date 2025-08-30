@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>2048 Cyberpunk Deluxe</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Orbitron", sans-serif;
+      background: black;
+      color: #0ff;
+      text-align: center;
+      overflow: hidden;
+    }
+    canvas#matrix {
+      position: fixed;
+      top:0; left:0;
+      width:100%; height:100%;
+      z-index:-1;
+      background: black;
+    }
+    h1 {
+      text-shadow: 0 0 10px #0ff, 0 0 20px #f0f;
+    }
+    #scoreboard {
+      margin: 10px;
+      font-size: 18px;
+      text-shadow: 0 0 10px #0ff;
+    }
+    #game-container {
+      width: 400px;
+      height: 400px;
+      margin: 20px auto;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: 5px;
+      background: rgba(10,10,20,0.8);
+      padding: 5px;
+      border: 3px solid #0ff;
+      box-shadow: 0 0 20px #0ff;
+    }
+    .tile {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 22px;
+      font-weight: bold;
+      border-radius: 6px;
+      background: rgba(0, 255, 255, 0.1);
+      color: #fff;
+      transition: 0.2s;
+    }
+    .tile.locked {
+      background: rgba(255,0,0,0.5) !important;
+      text-decoration: line-through;
+    }
+    #timer {
+      margin: 10px;
+      font-size: 18px;
+      text-shadow: 0 0 10px #f0f;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="matrix"></canvas>
+  <h1>2048 Cyberpunk Deluxe ⚡</h1>
+  <div id="scoreboard">Score: <span id="score">0</span> | Highscore: <span id="highscore">0</span></div>
+  <div id="timer">Temps restant: <span id="time">60</span>s</div>
+  <div id="game-container"></div>
+
+  <script>
+    /* ==============================
+       Fond animé style "matrix"
+    ============================== */
+    const canvas = document.getElementById("matrix");
+    const ctx = canvas.getContext("2d");
+    canvas.height = window.innerHeight;
+    canvas.width = window.innerWidth;
+    const letters = "01";
+    const fontSize = 14;
+    const columns = canvas.width/fontSize;
+    const drops = Array(Math.floor(columns)).fill(1);
+    function drawMatrix() {
+      ctx.fillStyle = "rgba(0,0,0,0.1)";
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle = "#0f0";
+      ctx.font = fontSize + "px monospace";
+      for(let i=0;i<drops.length;i++){
+        let text = letters.charAt(Math.floor(Math.random()*letters.length));
+        ctx.fillText(text,i*fontSize,drops[i]*fontSize);
+        if(drops[i]*fontSize>canvas.height && Math.random()>0.975){
+          drops[i]=0;
+        }
+        drops[i]++;
+      }
+    }
+    setInterval(drawMatrix,33);
+
+    /* ==============================
+       Jeu 2048
+    ============================== */
+    const size = 4;
+    let board = [];
+    let score = 0;
+    let highscore = localStorage.getItem("highscore2048") || 0;
+    let timeLeft = 60;
+    let hardcoreBlocks = [];
+
+    document.getElementById("highscore").textContent = highscore;
+
+    function initBoard() {
+      board = Array(size).fill().map(()=>Array(size).fill(0));
+      score=0;
+      timeLeft=60;
+      hardcoreBlocks=[];
+      addRandomTile();
+      addRandomTile();
+      drawBoard();
+    }
+
+    function addRandomTile() {
+      let empty = [];
+      for (let r=0;r<size;r++){
+        for (let c=0;c<size;c++){
+          if(board[r][c]===0) empty.push({r,c});
+        }
+      }
+      if(empty.length){
+        let {r,c} = empty[Math.floor(Math.random()*empty.length)];
+        board[r][c] = Math.random()<0.9 ? 2 : 4;
+      }
+      // Hardcore: lock une case au hasard
+      if(Math.random()<0.1){
+        let r = Math.floor(Math.random()*size);
+        let c = Math.floor(Math.random()*size);
+        hardcoreBlocks.push(r+"-"+c);
+      }
+    }
+
+    function drawBoard() {
+      const container = document.getElementById("game-container");
+      container.innerHTML = "";
+      for(let r=0;r<size;r++){
+        for(let c=0;c<size;c++){
+          let value = board[r][c];
+          let tile = document.createElement("div");
+          tile.className = "tile";
+          if(value>0){
+            tile.dataset.value=value;
+            tile.textContent=value;
+          }
+          if(hardcoreBlocks.includes(r+"-"+c)){
+            tile.classList.add("locked");
+          }
+          container.appendChild(tile);
+        }
+      }
+      document.getElementById("score").textContent=score;
+    }
+
+    function slide(row,rIndex) {
+      row = row.filter(v => v);
+      for (let i=0;i<row.length-1;i++){
+        if(row[i]===row[i+1]){
+          row[i]*=2;
+          score+=row[i];
+          row[i+1]=0;
+          new Audio("https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg").play();
+        }
+      }
+      row=row.filter(v=>v);
+      while(row.length<size) row.push(0);
+      return row;
+    }
+
+    function rotate(board){
+      return board[0].map((_,i)=>board.map(row=>row[i]).reverse());
+    }
+
+    function move(direction){
+      let oldBoard=JSON.stringify(board);
+      for(let i=0;i<direction;i++) board=rotate(board);
+      board=board.map(slide);
+      for(let i=0;i<(4-direction)%4;i++) board=rotate(board);
+      if(JSON.stringify(board)!==oldBoard){
+        addRandomTile();
+      }
+      drawBoard();
+      if(score>highscore){
+        highscore=score;
+        localStorage.setItem("highscore2048",highscore);
+        document.getElementById("highscore").textContent=highscore;
+      }
+    }
+
+    document.addEventListener("keydown", e=>{
+      if(e.key==="ArrowLeft") move(0);
+      else if(e.key==="ArrowUp") move(1);
+      else if(e.key==="ArrowRight") move(2);
+      else if(e.key==="ArrowDown") move(3);
+    });
+
+    // Timer
+    setInterval(()=>{
+      timeLeft--;
+      if(timeLeft<=0){
+        alert("⏱️ Temps écoulé ! Score final: "+score);
+        initBoard();
+      }
+      document.getElementById("time").textContent=timeLeft;
+    },1000);
+
+    initBoard();
+  </script>
+</body>
+</html>
